@@ -1,0 +1,54 @@
+#!/bin/bash
+
+# full path to node
+NODE=/Users/ronnie/Unix/Node/bin/node
+
+# server command
+SERVER="$NODE fslogger.js"
+
+# server URL
+URL="http://127.0.0.1:8888"
+
+# copy things to current directory
+cp ../fslogger.{js,conf} .
+
+$SERVER  2> /dev/null 1>server.log &
+pid=$!
+sleep 2
+
+res=$(curl -s -I $URL | head -1 )
+[[ "$res" == 'HTTP/1.1 200 OK'*  ]] || echo -n "Error on " && echo Test 1
+
+res=$(curl -s -I ${URL}/test | head -1)
+[[ "$res" == 'HTTP/1.1 200 OK'*  ]] || echo -n "Error on " && echo Test 2
+
+res=$(curl -s -I -X HEAD ${URL} | head -1)
+[[ "$res" == 'HTTP/1.1 200 OK'*  ]] || echo -n "Error on " && echo Test 3
+
+res=$(curl -s -I -X POST ${URL} | head -1)
+[[ "$res" == 'HTTP/1.1 200 OK'*  ]] || echo -n "Error on " && echo Test 4
+
+res=$(curl -s -I -X PUT ${URL}/test | head -1)
+[[ "$res" == 'HTTP/1.1 405'*  ]] || echo -n "Error on " && echo Test 5
+
+# test big input
+curl -s -X POST ${URL} -d@big.json > /dev/null
+sleep 1
+kill -0 $pid 2> /dev/null || echo -n "Error on " && echo Test 6
+
+# test irrelevant JSON
+curl -s -X POST ${URL} -d@other.json > /dev/null
+sleep 1
+kill -0 $pid 2> /dev/null || echo -n "Error on " && echo Test 7
+
+# do something normal
+curl -s -X POST ${URL} -d@doc.json > /dev/null
+sleep 1
+kill -0 $pid 2> /dev/null || echo -n "Error on " && echo Test 8
+
+# cleanup
+kill $pid 2> /dev/null || echo "Failed to kill fslogger"
+(sleep 5; /bin/rm -f fslogger.{js,conf})&
+
+
+echo "No errors should have been emitted"
