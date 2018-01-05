@@ -7,7 +7,7 @@
 
 This is still a 0.1 version of the server script.  It still needs a few auxiliary scripts, such as monitoring.  The CEF format emitted is still in development.  Time conversions make the assumption that the host running the server and the ArcSight instance are in the same timezone.
 
-The script `fslogger.js` has been tested with Node v6.4.0 and Node v8.9.3. To install it a few parameters need to be configured in the configuration file `fslogger.conf` that needs to be in the directory from where the script is launched.  This is controlled by the string in `configPath` in the script. 
+The script `fslogger.js` has been tested with Node v6.4.0 and Node v8.9.3. To install it a few parameters need to be configured in `fslogger.conf` that needs to be in the directory from where the script is launched.  This is controlled by the string in `configPath` in the script. 
 
 port
 : the port the server will listen on.  Set to 8888.  A working installation may require setting it to 80.
@@ -61,3 +61,6 @@ The `fslogger` server may also produce messages.  A few stratup and termination 
  cat pbit.log.1  # two lines
 ```
 
+## Developing
+
+I have an unusual Node setup on my laptop (to isolate potential mistakes and unchecked libraries).  I handle that by keeping some changes to the Makefile in a local directory `.makefile`.

@@ -1,5 +1,6 @@
 .hg
 .hgignore
+.makefile
 Cef.md
 Notes.md
 simple.html
