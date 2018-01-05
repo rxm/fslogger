@@ -3,7 +3,10 @@
 
 .PHONY: simple ss test clean zip run kill
 	
-NODE = /Users/ronnie/Unix/Node/bin/node	
+NODE = node	
+	
+# inclide if needed local changes	
+-include .makefile	
 
 zip:
 	if [ -d fslogger ]; then /bin/rm -f -r fslogger; fi
@@ -28,13 +31,6 @@ kill:
 	
 test:
 	@ cd tests; doTest
-
-simple: simple.js
-	node simple.js
-
-ss: ss.js
-	@ echo "open http://127.0.0.1:8888/"
-	node ss.js
 
 clean:
 	if [ -d fslogger ]; then /bin/rm -f -r fslogger; fi
