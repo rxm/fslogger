@@ -31,7 +31,7 @@ start() {
     [ -x $node ] || exit 5
     [ -f $fshome/fslogger.js ] || exit 6
     printf '%-60s' "Strating $prog"
-    runuser fslogger -c "bash -c \"(cd $fshome; echo \\\$BASHPID >> $tmpidf ; exec $node ./fslogger.js) & \"" >> $serverlog 2>&1 &
+    runuser fslogger -c "bash -c \"(cd $fshome; echo \\\$BASHPID >> $tmpidf ; exec $node ./fslogger.js) & \"" >> $serverlog 2>&1
     sleep 1
     if [ -f $tmpidf ]; then mv $tmpidf $pidfile; fi
     c_status
@@ -70,8 +70,7 @@ reload() {
 }
 
 status() {
-    c_status
-    if [ $? -eq 0 ]
+    if c_status
     then
        echo "$prog (pid $(cat $pidfile)) is running ..."
     else
@@ -98,14 +97,13 @@ case "$1" in
       $1
       ;;
     reload|restart|stop)
-      c_status
-      if [[ $? -ne 0 ]]; then exit 0; fi
+      c_status || exit 0
       $1
       ;;
     status)
       status
       ;;
     *)
-      echo $"Usage: $0 {start|stop|reload|restart|status}"
+      echo $"Usage: $0 {reload|restart|start|status|stop}"
       exit 2
 esac

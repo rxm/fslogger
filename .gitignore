@@ -10,3 +10,6 @@ simple.txt
 ss.js
 trynode
 xtrs
+fslogger-*.tar
+systems/centos6/base/usr/fslogger*
+systems/centos6/files.tgz

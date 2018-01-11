@@ -16,7 +16,7 @@ host
 : set it to `127.0.0.1` to test locally, otherwise omit or set to `null`.
 
 path
-: the full path to the log file.  If just a filename is given, the logfile will be created in the same directory that server is launched.  A production install would set it to something like `/var/log/pbit/detections.log`.
+: the full path to the log file.  If just a filename is given, the logfile will be created in the same directory that the server is launched.  A production install would set it to something like `/var/log/pbit/detections.log`.
 
 timezoneStrings
 : an object where the values are three letter time zone strings and the keys are the offset in minutes (relative to GMT) to the corresponding values.  The object should have a value for all possible offsets that may be seen in the host of the server.  If ommitted, the timezone will be ommitted from the CEF entry.
@@ -28,6 +28,43 @@ node fslogger.js &
 ```
 
 Sample data will show up in the `pbit.log` file
+
+### Centos 6 install
+
+Using the `make centos6` target of the Makefile, a TAR file is created with an installer script.   Transfer theTAR file to the Centos 6 machine that will run `fslogger` and untar it in some temporary directory.  This will create a directory with two files: `installer`, a bash script, and `files.tgz` a compressed TAR file with `fslogger` and several system files.   Run the `installer` script, which will complain if it does not detect Nodejs.  
+
+The script:
+
+* Creates a `fslogger` system user if one does not exist
+* Installs `fslogger` in `/usr/local/share/fslogger`
+* A `logs` directory for the DeepXi POSTs in `/usr/local/share/fslogger`
+* A script to use with `service`
+* A logrotate configuration for the server output (but not for the POST detetions)
+
+I you have previously installed using this method, the instaler script will not overwrite `fslogger.conf`
+
+As a super user:
+
+``` bash
+# untar the files
+tar -xf fslogger-83d85.tar -C /tmp
+cd /tmp/fslogger-83d85
+
+# run the instaler
+./installer
+
+# try it out
+cd /usr/local/share/fslogger
+service fslogger start
+curl http://127.0.0.1:8888         # returns some HTML
+curl -X POST http://127.0.0.1:8888 -d@doc.json & echo
+curl -X POST http://127.0.0.1:8888 -d '{ "hello: "oops"}' & echo
+
+cat logs/pbit.log                  # one entry
+cat /var/log/fslogger.log          # A Listen and a parse error messages
+
+service fslogger stop
+```
 
 
 ## Test
