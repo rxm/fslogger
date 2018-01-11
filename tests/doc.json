@@ -13,7 +13,7 @@
     "tags": [
       "logz"
     ],
-    "node": "INTELGD\\VA-IS-TABLEAU",
+    "node": "MYGRP\\DESK01",
     "score": 0.10194539202814415,
     "prob_type": "sensing",
     "@timestamp": "2017-12-29T02:23:34.863Z",

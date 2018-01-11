@@ -18,7 +18,7 @@ port = 8888;
 
 // set host to 127.0.0.1 for local connections
 //  and null for external
-host = null; 
+host = null;
 
 // full path of the file to log to
 logfile = 'pbit.log';
@@ -193,10 +193,19 @@ readConfig = function () {
   var cf, goodQ, config;
     
   // read the contents of the configuration
-  cf = fs.readFileSync(
-    configPath, 
-    {'encoding': 'ascii'}
-  );
+  try {
+    cf = fs.readFileSync(
+      configPath, 
+      {'encoding': 'ascii'}
+    );
+  } catch (e) {
+    if (e.code == 'ENOENT') {
+      console.error("Using defaults. Cannot read " + e.path);
+    } else {
+      console.error("Cannot read conf" + e.stack);
+      process.exit(3);
+    }
+  }
   
   // parse the configuration file
   goodQ = true;
@@ -204,7 +213,7 @@ readConfig = function () {
     config = JSON.parse(cf);
   } catch (e) {
     // did not parse correctly
-    serverLog('Configuration file parse error for ' + path);
+    serverLog('Configuration file parse error for ' + configPath);
     goodQ = false;
   }
   
@@ -256,6 +265,7 @@ process.on('uncaughtException', (err) => {
   }
   
 });
+
 
 // create a server 
 server = http.createServer( function(req, res) {

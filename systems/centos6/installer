@@ -1,0 +1,33 @@
+#!/bin/bash
+
+#
+#   INSTALL SCRIPT FOR fslogger
+#
+
+if [ ! -x /usr/bin/node ]
+then
+  printf 'You need to install Nodejs first.  Try\n'
+  printf ' curl --silent --location https://rpm.nodesource.com/setup_8.x'
+  printf ' | sudo bash -\n'
+  printf ' yum install nodejs\n'
+  exit 1
+fi
+
+FB=/usr/local/share
+FH=$FB/fslogger
+
+# create a user if needed
+id -u fslogger > /dev/null 2>&1
+if [[ $? -ne 0 ]]; then adduser -r fslogger; fi
+
+# install fslogger related files
+tar -xvf files.tgz -C /
+if [ ! -f $FH/fslogger.conf ]
+then
+  cp $FH/fslogger.conf.orig $FH/fslogger.conf
+fi
+mkdir $FH/logs
+chown --recursive fslogger:fslogger $FH
+
+# schedule fslogger to start on reboot
+chkconfig --level 2345 fslogger on
