@@ -3,11 +3,12 @@
         missingok
         compress
         delaycompress
-        notifempty
         create 644 fslogger fslogger
+        dateext
+        # keep a year's worth of logs
+        rotate 366
         # rotate first, then apply script
         sharedscripts
-        dateext
         postrotate
             test ! -f /var/run/fslogger.pid || kill -PIPE $(cat /var/run/fslogger.pid)
         endscript
