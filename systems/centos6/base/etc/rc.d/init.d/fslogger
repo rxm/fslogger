@@ -6,7 +6,7 @@
 # description:  nodejs server that accepts POSTs from Permissionbit's DeepXi
 #
 # processname: fslogger
-# config:      /usr/local/share/fslogger/fslogger.conf
+# config:      /opt/share/fslogger/fslogger.conf
 # pidfile:     /var/run/fslogger.pid
 
 # Source function library.
@@ -19,7 +19,7 @@
 [ "$NETWORKING" = "no" ] && exit 0
 
 pidfile=/var/run/fslogger.pid
-fshome=/usr/local/share/fslogger
+fshome=/opt/share/fslogger
 node=/usr/bin/node
 # name of program for printout
 prog=fslogger

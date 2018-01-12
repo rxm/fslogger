@@ -1,0 +1,14 @@
+/opt/share/fslogger/logs/pbit.log {
+        daily
+        missingok
+        compress
+        delaycompress
+        notifempty
+        create 644 fslogger fslogger
+        # rotate first, then apply script
+        sharedscripts
+        dateext
+        postrotate
+            test ! -f /var/run/fslogger.pid || kill -PIPE $(cat /var/run/fslogger.pid)
+        endscript
+}

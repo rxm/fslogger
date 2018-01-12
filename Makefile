@@ -11,10 +11,10 @@ BF = ReadMe.md fslogger.js tests/doc.json
 -include .makefile	
 
 MACTAR = --disable-copyfile --exclude .DS_Store
-ZIPEXT = $(shell hg sum | grep -oE '[a-f0-9]{5,}' | cut -b '1-5')
+ZIPEXT = $(shell hg id -i| head -1 | grep -oE '[a-f0-9]{5,}' | cut -b '1-5')
 
 C6 = systems/centos6/base
-C6HOME = /usr/local/share/fslogger
+C6HOME = /opt/share/fslogger
 BC6H = $(C6)$(C6HOME)
 
 centos6:

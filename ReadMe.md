@@ -31,15 +31,17 @@ Sample data will show up in the `pbit.log` file
 
 ### Centos 6 install
 
-Using the `make centos6` target of the Makefile, a TAR file is created with an installer script.   Transfer theTAR file to the Centos 6 machine that will run `fslogger` and untar it in some temporary directory.  This will create a directory with two files: `installer`, a bash script, and `files.tgz` a compressed TAR file with `fslogger` and several system files.   Run the `installer` script, which will complain if it does not detect Nodejs.  
+Using the `make centos6` target of the Makefile, a TAR file is created with an installer script.   Transfer the TAR file to the Centos 6 machine that will run `fslogger` and untar it in some temporary directory.  This will create a directory with two files: `installer`, a bash script, and `files.tgz` a compressed TAR file with `fslogger` and several system files.   Run the `installer` script, which will complain if it does not detect Nodejs.  
 
 The script:
 
 * Creates a `fslogger` system user if one does not exist
-* Installs `fslogger` in `/usr/local/share/fslogger`
-* A `logs` directory for the DeepXi POSTs in `/usr/local/share/fslogger`
+* Installs `fslogger` in `/opt/share/fslogger`
+* A `logs` directory for the DeepXi POSTs in `/opt/share/fslogger`
 * A script to use with `service`
 * A logrotate configuration for the server output (but not for the POST detetions)
+* Sets `fslogger` to restart on reboot
+
 
 I you have previously installed using this method, the instaler script will not overwrite `fslogger.conf`
 
@@ -54,11 +56,11 @@ cd /tmp/fslogger-83d85
 ./installer
 
 # try it out
-cd /usr/local/share/fslogger
+cd /opt/share/fslogger
 service fslogger start
 curl http://127.0.0.1:8888         # returns some HTML
-curl -X POST http://127.0.0.1:8888 -d@doc.json & echo
-curl -X POST http://127.0.0.1:8888 -d '{ "hello: "oops"}' & echo
+curl -X POST http://127.0.0.1:8888 -d@doc.json && echo
+curl -X POST http://127.0.0.1:8888 -d '{ "hello: "oops"}' && echo
 
 cat logs/pbit.log                  # one entry
 cat /var/log/fslogger.log          # A Listen and a parse error messages

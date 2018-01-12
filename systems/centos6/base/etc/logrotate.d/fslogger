@@ -5,15 +5,11 @@
         compress
         delaycompress
         notifempty
+        copytruncate
         create 644 root root
-        # rotate first, then apply script
-        sharedscripts
         # name files foo.3.log.gz and not foo.log.3.gz
         extension .log
         # cancel the overall dateext
         nodateext
         start 0
-        postrotate
-            test ! -f /var/run/fslogger.pid || kill -PIPE $(cat /var/run/fslogger.pid)
-        endscript
 }

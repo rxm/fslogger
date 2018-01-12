@@ -13,7 +13,7 @@ then
   exit 1
 fi
 
-FB=/usr/local/share
+FB=/opt/share
 FH=$FB/fslogger
 
 # create a user if needed
@@ -30,7 +30,7 @@ then
 fi
 
 # a place to save the DeepXi detections
-mkdir $FH/logs
+if [ ! -d $FH/logs ]; then mkdir $FH/logs; fi
 
 # make fslogger own some files
 chown --recursive fslogger:fslogger $FH
