@@ -83,7 +83,7 @@ I have an unusual Node setup on my laptop (to isolate potential mistakes and unc
 
 ### Testing the logrotation
 
-The basic mechanism for not loosing POSTs relies on Unix sending data to a filehandle and not a filename.  This commands below illustrate that.
+The basic mechanism for not loosing POSTs relies on Unix sending data to a filehandle and not a filename.  The commands below illustrate that.
 
 Open two terminals and change both to the directory with `fslogger.js` and the log file `pbit.log`.  Then issue the commands below.  The `curl` will POST data to the server.  Renaming the log file tests that it is safe to use `logrotate`.
 
