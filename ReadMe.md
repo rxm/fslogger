@@ -1,7 +1,7 @@
 
 # Write pBit detections to files
 
-> **Version 0.1.6** of fslogger, a Node server that writes POST requests to a file translating DeepXi JSON into ArcSight CEF
+> **Version 0.1.7** of fslogger, a Node server that writes POST requests to a file translating DeepXi JSON into ArcSight CEF
 
 ## Installing
 
@@ -24,6 +24,9 @@ path
 
 timezoneStrings
 : an object where the values are three letter time zone strings and the keys are the offset in minutes (relative to GMT) to the corresponding values.  The object should have a value for all possible offsets that may be seen in the host of the server.  If omitted, the timezone will be omitted from the CEF entry.
+
+logfile
+: file with path of where the DeepXi entries will be saved to.  Default value is `./pbit.log`.  Setting it to `stderr` or `stdout` may be useful for developing.
 
 To launch the server (as a super user if using port 80):
 
