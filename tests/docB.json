@@ -1,0 +1,39 @@
+{
+  "hunt": true,
+  "family_bundle": "pbit_cover_base_1703_up6",
+  "process_summary": "vmware-authd (4796) -- 8\nCylanceSvc (680) -- 1\nWmiPrvSE (10180) -- 1",
+  "unsplit_doc": "f3f68394-a0fe-4b32-8131-c8928cbad432",
+  "sense": false,
+  "used_family_bundles": [
+    "pbit_cover_base_1703_up6",
+    "6656614f-367e-4e22-b64c-7bf20ada4114",
+    "06f89f37-3e35-4fc4-83cb-4cc56607d244",
+    "pbit_known_programs_base_1703_up5",
+    "9287dd0a-507b-4771-a4fc-f980d8811bb4",
+    "ca62f24a-f9ec-4e34-90e2-58517ded9d68",
+    "1018d76c-8a6a-4fd2-9a2e-23018e59b0e4"
+  ],
+  "run_end": 1516281678127,
+  "tags": [
+    "logz",
+    "fslogger"
+  ],
+  "node": "MYGRP\\DESK01",
+  "score": 0.7617189512753867,
+  "prob_type": "hunting",
+  "@timestamp": "2018-01-18T13:21:17.436Z",
+  "alert": true,
+  "run_created_on": 1516281677436,
+  "@version": "1",
+  "ignore": true,
+  "run_start": 1516281529900,
+  "family": {
+    "score": 0.8719832,
+    "endpoint_identifier": "c47e4bdb.1a6a8d18",
+    "exemplars": "[[\"md5:16f81faf0aed80d8df01216db8e0ec24\",\"sha256:b22396111a5c18b6252b527acb417745442ed7d07cdcae5a16af8a0644ef025b\"],[\"md5:1b7bd0940b6c6d7fd582338b48ddf330\",\"sha256:5ee327d7b3a2f255c0606d4bf762a9541496212116402ac147fe3b9e8b7fd75b\"],[\"md5:6fb6b00b6d1c3d25e9010454b2ac2433\",\"sha256:d866d9ba0515ee4b054e655dec544bb6239b90b2924ff09d7568a83c660b8426\"],[\"md5:849ba5f32eac42b84c6e0d0a38b53c93\",\"sha256:048ae6bdd5debfeeeee50f95101cb03bcd882dd3209e7748b488f2684965d0de\"],[\"md5:8096121313c447879771f091c53908d0\",\"sha256:b974b29e6d7e8879cdfc41c326f79cf28995922355d45292023e00ac3c5cd463\"]]",
+    "name": "pbit_17_0469//trojan//agent/chikdos",
+    "category": "Similar to likely malicious program",
+    "uuid": "44784043-8f87-40bf-9066-76abfea5401c"
+  },
+  "notice": true
+}
