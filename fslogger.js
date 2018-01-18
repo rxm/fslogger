@@ -2,39 +2,45 @@
  *   Take the POST data and save it to a log
  */
 
+'use strict';
 
-http = require('http');
-fs = require('fs');
+var http = require('http');
+var fs = require('fs');
+var process = require('process');
 
 
 /*
- *           ----- PARAMETERS -----
+ *           ----- DEFAULT PARAMETERS -----
  */
 
 // largest acceptable body in characters
-MAXBODY = 20000;
+var MAXBODY = 20000;
 
-port = 8888;
+var port = 8888;
 
 // set host to 127.0.0.1 for local connections
 //  and null for external
-host = null;
+var host = null;
 
 // full path of the file to log to
-logfile = 'pbit.log';
-logOptions = {flags: 'a', encoding: 'utf8', mode: 0o640, autoClose: true};
+var logfile = 'pbit.log';
+var logOptions = {flags: 'a', encoding: 'utf8', mode: 0o640, autoClose: true};
 
 // the path to the configuration file
-configPath = './fslogger.conf';
+var configPath = './fslogger.conf';
 
 
 // message for a GET
-e200 = '' +
+var e200 = '' +
   '<html><head><title>Not accepted</title></head>' +
   '<body><h2>Not accepted</h2></body></html>';
   
 // stream to log file
-logs = null;
+var logs = null;
+
+
+// funtion that creates output
+var logger = function ( ) {};
 
 /*
  *           ----- FUNCTIONS -----
@@ -46,8 +52,8 @@ logs = null;
   offset: the timezone offset in minutes
   =>: a formatted string
 */
-timezoneStrings = null;
-tzString = function (off) {
+var timezoneStrings = null;
+function tzString (off) {
   var r;
   
   try {
@@ -56,7 +62,7 @@ tzString = function (off) {
     r = '';
   }
   
-  return r
+  return r;
 }
 
 /**
@@ -65,7 +71,7 @@ tzString = function (off) {
   epoch: the epoch in milliseconds
   =>: a formatted string
 */
-formatEpoch = function (epoch) {
+function formatEpoch (epoch) {
     
     var date = new Date(epoch);
     var day = date.getDate();
@@ -95,7 +101,7 @@ formatEpoch = function (epoch) {
   message: string to write
   => : undefined
 */
-serverLog = function(message) {
+function serverLog (message) {
   var ts = new Date().toISOString();
   
   console.log(ts + '|' + message);
@@ -107,7 +113,7 @@ serverLog = function(message) {
   data: a primitive Javascript type to encode
   => : a CEF encoded string
 */
-cefencode = function(data) {
+function cefencode (data) {
   var s = '';
   switch (typeof(data)) {
     case 'undefined':
@@ -129,7 +135,118 @@ cefencode = function(data) {
       s = 'unrecognized data';
   }
   
+  // no leading spaces
+  s = s.replace(/^ +/, '');
+  
   return s;
+}
+
+/**
+
+*/
+function formatForCEF(data) {
+  var cef, s, sev, ex, regex, match;
+    
+  cef = formatEpoch(data.run_start);
+  cef += ' ' + data.node;
+  cef += ' CEF:0|PermissionBit|DeepXi|1.0';
+  
+  // device event class id
+  if (typeof(data.family.uuid) == 'string') {
+    cef += '|' + data.family.uuid;
+  } else {
+    cef += '|Null Event';
+  }
+  
+  // device event name
+  switch (data.prob_type) {
+    case 'sensing': cef += '|Sensing Detection'; break;
+    case 'hunting': cef += '|Hunting Detection'; break;
+    case 'imputed': cef += '|Imputed Detection'; break;
+    default: cef += '|Information Event';
+  }
+  
+  // severity
+  s = data.score;
+  if (s>=1.) { s -= 0.000001; }
+  if (s<0.0) { s = 0.0; }
+  
+  if (data.alert) {
+    sev = Math.floor(2*s) + 9;
+    if (data.ignore) {
+      sev -= 3;
+    }
+  } else {
+    if (data.notice) {
+      sev = Math.floor(8*s);
+    } else {
+      sev = Math.floor(7*s);
+    }
+  }
+  
+  cef += '|' + sev;
+
+  //
+  // extensions
+  //
+  
+  cef += '|'
+  
+  // process summary
+  cef += 'deviceCustomString1Label=processSummary';
+  cef += ' deviceCustomString1=' + cefencode(data.process_summary);
+  
+  // score
+  cef += ' deviceCustomFloatingPoint1Label=Score';
+  cef += ' deviceCustomFloatingPoint1=';
+  cef += (new Number(data.score)).toPrecision(3);
+  
+  // family bundle
+  if (typeof(data.family_bundle) == 'string') {
+    cef += ' deviceCustomString2Label=SeenBefore';
+    cef += ' deviceCustomString2=';
+    
+    if (data.family_bundle.startsWith('local_detections_filt')) {
+      cef += 'Locally';
+    } else if (data.family_bundle.startsWith('pbit_cover_base')) {
+      cef += 'In malware';
+    } else if (data.family_bundle.startsWith('pbit_known_programs_base')) {
+      cef += 'In software';
+    } else {
+      // assume UUID
+      cef += 'Only recently';
+    }
+  }
+  
+  // device action
+  if (data.ignore) {
+    cef += ' deviceAction=Ignore';
+  } else if (data.alert) {
+    cef += ' deviceAction=Alert';
+  } else if (data.notice) {
+    cef += ' deviceAction=Notice';
+  } else {
+    cef += ' deviceAction=None';
+  }
+  
+  // do we have exemplars
+  console.log(data.family);
+  if (
+    typeof(data.family.exemplars) != 'undefined' && 
+    data.family.exemplars != null
+  ) {
+    console.log('>' + data.family.exemplars + '<');
+    regex = /sha256:([a-f0-9]+)/g;
+    ex = 'SHA256 of malware behaving like this:';
+    
+    while ( (match = regex.exec(data.family.exemplars)) !== null) {
+      ex += ' ' + match[1];
+    }
+    
+    cef += ' message=' + cefencode(ex);
+  }
+  
+  return cef;
 }
 
 /** 
@@ -139,46 +256,27 @@ cefencode = function(data) {
     jsonstr: a string serialized JSON
     => : undefined
 */
-logger = function(logs, jsonstr) {
+function ceflogger (logs, jsonstr) {
   var data;
   var badInputQ;
-  var cef;
-  var message = null;
   
   badInputQ = false;
   try {
     data = JSON.parse(jsonstr);
   } catch (e) {
     // did not parse correctly
-    serverLog("json parse error")
+    serverLog("json parse error");
     badInputQ = true;
   }
   
   if (! badInputQ) {
     // figure out event class
     try {
-      cef = formatEpoch(data.run_start);
-      cef += ' ' + data.node;
-      cef += ' CEF:0|PermissionBit|DeepXi|1.0';
-      
-      cef += '|1|Sense detection';
-  
-      // severity
-      cef += '|' + Math.round(10 * data.score);
-  
-      // extensions
-      cef += '|deviceExternalId=' + cefencode(data.node);
-  
-      message = 'alert: ' + data.alert.toString();
-      message += ' score: ' + data.score.toString();
-      message += ' process_summary: ' + data.process_summary;
-  
-      cef += ' message=' + cefencode(message);
-  
-      logs.write(cef + '\n', 'utf8', () => {} );
+      logs.write(formatForCEF(data) + '\n', 'utf8', () => {} );
     } catch (err) {
-      serverLog("Could not write messgage: " + 
-                 jsonstr.substring(0, 60) + " ...");
+      serverLog("Could not write message: " + 
+         jsonstr.replace(/[ \t\n]/g, '').substring(0, 40) + 
+         "... " + err);
     }
     
   }
@@ -187,10 +285,12 @@ logger = function(logs, jsonstr) {
 /**
   Read configuration file
 
-  Different search for it are implemented here
+  Different search strategies for it are implemented here
 */
-readConfig = function () {
-  var cf, goodQ, config;
+function readConfig () {
+  var cf, goodQ, config, lcode;
+  
+  // do something to find the configuration file
     
   // read the contents of the configuration
   try {
@@ -217,12 +317,36 @@ readConfig = function () {
     goodQ = false;
   }
   
+  // read if ok
   if (goodQ) {
-    port = config.port;
-    host = typeof(config.host) === 'undefined' ? null : config.host ;
+    
+    // these have hardwired values in the code
+    port = typeof(config.port) === 'undefined' ? port : config.port;
+    host = typeof(config.host) === 'undefined' ? host : config.host ;
     logfile = config.logfile;
     timezoneStrings = typeof(config.timezoneStrings) === 'undefined' ?
                             null : config.timezoneStrings;
+    
+    // logfile
+    logfile = typeof(config.logfile) === 'undefined' ? logfile : config.logfile;
+    
+    // deal with logger
+    lcode = config.logger;
+    if (typeof(lcode) === 'undefined') {
+      // default logger
+      logger = ceflogger;
+    } else {
+      lcode = lcode.toLowerCase().replace(/[ \t]+/, '');
+      // let's avoid eval
+      switch (lcode) {
+        case 'ceflogger': logger = ceflogger; break;
+        default: 
+          serverLog('No logger called ' + config.logger);
+          process.exit(5);
+      }      
+    }
+    
+    // done with goodQ
   }
   
 }
@@ -237,7 +361,13 @@ readConfig = function () {
 readConfig();
 
 // open log file
-logs = fs.createWriteStream(logfile,logOptions);
+if (logfile == 'stderr') {
+  logs = process.stderr;
+} else if (logfile == 'stdout') {
+  logs = process.stdout;
+} else {
+  logs = fs.createWriteStream(logfile,logOptions);
+}
 
 logs.on('error', (err) => {
   // serverLog("Could not write to " + logfile);
@@ -268,7 +398,7 @@ process.on('uncaughtException', (err) => {
 
 
 // create a server 
-server = http.createServer( function(req, res) {
+var server = http.createServer( function(req, res) {
 
     switch (req.method) {
       case 'POST':
@@ -309,9 +439,9 @@ server = http.createServer( function(req, res) {
 if (host === null ) {
   // we are listening to the world
   server.listen(port);
-  console.error('Listening on port ' + port);
+  serverLog('Listening on port ' + port);
 } else {
   // listen on some other interface
   server.listen(port, host);  
-  console.error('Listening at http://' + host + ':' + port);
+  serverLog('Listening at http://' + host + ':' + port);
 }

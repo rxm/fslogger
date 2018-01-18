@@ -46,6 +46,11 @@ curl -s -X POST ${URL} -d@doc.json > /dev/null
 sleep 1
 kill -0 $pid 2> /dev/null || echo -n "Error on " && echo Test 8
 
+# do something else 
+curl -s -X POST ${URL} -d@docA.json > /dev/null
+sleep 1
+kill -0 $pid 2> /dev/null || echo -n "Error on " && echo Test 9
+
 # cleanup
 kill $pid 2> /dev/null || echo "Failed to kill fslogger"
 (sleep 5; /bin/rm -f fslogger.{js,conf})&

@@ -1,7 +1,7 @@
 # simple Node.js server
 
 
-.PHONY: simple ss test clean centos6 run kill
+.PHONY: test clean centos6
 	
 NODE = node	
 
@@ -28,23 +28,12 @@ centos6:
 	tar -cf fslogger-$(ZIPEXT).tar $(MACTAR) fslogger-$(ZIPEXT)
 	/bin/rm -f -r fslogger-$(ZIPEXT)
 
-run:
-	@ if [ -f .fslogger_pid ]; \
-	  then \
-	    echo "Old $$(cat .fslogger_pid) still running?";  \
-	  else \
-	    $(NODE) fslogger.js > server.log & echo $$! > .fslogger_pid; \
-	  fi
-
-kill:
-	@ kill $$(cat .fslogger_pid) && echo "$$(cat .fslogger_pid) terminated"
-	@ /bin/rm -f .fslogger_pid
 	
 test:
 	@ cd tests; doTest
 
 clean:
 	if [ -d fslogger ]; then /bin/rm -f -r fslogger; fi
-	/bin/rm -f pbit.log fslogger-*.{zip,tgz,tar} server.log .fslogger_pid
+	/bin/rm -f pbit.log fslogger-*.{zip,tgz,tar} server.log
 	/bin/rm -f tests/{server.log,pbit.log}
 	/bin/rm -f -r systems/centos6/files.tgz $(BC6H)

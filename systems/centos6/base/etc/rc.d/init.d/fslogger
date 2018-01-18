@@ -30,7 +30,7 @@ start() {
     tmpidf=/tmp/fslogger.$RANDOM
     [ -x $node ] || exit 5
     [ -f $fshome/fslogger.js ] || exit 6
-    printf '%-60s' "Strating $prog"
+    printf '%-60s' "Starting $prog"
     runuser fslogger -c "bash -c \"(cd $fshome; echo \\\$BASHPID >> $tmpidf ; exec $node ./fslogger.js) & \"" >> $serverlog 2>&1
     sleep 1
     if [ -f $tmpidf ]; then mv $tmpidf $pidfile; fi
