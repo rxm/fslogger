@@ -230,12 +230,10 @@ function formatForCEF(data) {
   }
   
   // do we have exemplars
-  console.log(data.family);
   if (
     typeof(data.family.exemplars) != 'undefined' && 
     data.family.exemplars != null
   ) {
-    console.log('>' + data.family.exemplars + '<');
     regex = /sha256:([a-f0-9]+)/g;
     ex = 'SHA256 of malware behaving like this:';
     
@@ -351,6 +349,27 @@ function readConfig () {
   
 }
 
+/**
+  Return a stream to send the logs to
+  logfile: a string with path | stderr | stdout
+  options: an object with the optons needed by createWS
+
+  => : a stream
+*/
+function openLogStream(logfile, options) {
+  var logs;
+  
+  if (logfile == 'stderr') {
+    logs = process.stderr;
+  } else if (logfile == 'stdout') {
+    logs = process.stdout;
+  } else {
+    logs = fs.createWriteStream(logfile, options);
+  }
+  
+  return logs;
+}
+
 /*
  *
  *             MAIN
@@ -361,13 +380,7 @@ function readConfig () {
 readConfig();
 
 // open log file
-if (logfile == 'stderr') {
-  logs = process.stderr;
-} else if (logfile == 'stdout') {
-  logs = process.stdout;
-} else {
-  logs = fs.createWriteStream(logfile,logOptions);
-}
+logs = openLogStream(logfile, logOptions);
 
 logs.on('error', (err) => {
   // serverLog("Could not write to " + logfile);
@@ -378,8 +391,10 @@ logs.on('error', (err) => {
 
 // re-open log file for log rotation
 process.on('SIGPIPE', () => {
-  logs.end();
-  logs = fs.createWriteStream(logfile, logOptions);
+  if (logfile != 'stderr' && logfile != 'stdout' ) {
+    logs.end();
+    logs = openLogStream(logfile, logOptions);
+  }
 });
 
 // die on exceptions
