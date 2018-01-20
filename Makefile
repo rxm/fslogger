@@ -1,7 +1,7 @@
 # simple Node.js server
 
 
-.PHONY: test clean centos6 tar
+.PHONY: test clean centos6
 	
 NODE = node	
 
@@ -17,18 +17,16 @@ C6 = systems/centos6/base
 C6HOME = /opt/share/fslogger
 BC6H = $(C6)$(C6HOME)
 
-centos6: tar
+centos6:
 	/bin/rm -r -f $(BC6H)
 	mkdir -p $(BC6H)
-	cp $(BF) $(BC6H)
-	cp systems/chris.conf $(BC6H)/fslogger.conf.orig
+	install -m 0664 $(BF) $(BC6H)
+	install -m 0664 systems/chris.conf $(BC6H)/fslogger.conf.orig
+	cd $(C6); tar -czf ../files.tgz $(MACTAR) *	
 	mkdir fslogger-$(ZIPEXT)
 	cp systems/centos6/{files.tgz,installer} fslogger-$(ZIPEXT)
 	tar -cf fslogger-$(ZIPEXT).tar $(MACTAR) fslogger-$(ZIPEXT)
 	/bin/rm -f -r fslogger-$(ZIPEXT)
-
-tar:
-	cd $(C6); tar -czf ../files.tgz $(MACTAR) *	
 	
 test:
 	@ cd tests; doTest

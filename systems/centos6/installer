@@ -33,7 +33,7 @@ id -u fslogger > /dev/null 2>&1
 if [[ $? -ne 0 ]]; then adduser -r fslogger; fi
 
 # install fslogger related files
-tar -xvf files.tgz -C $ROOT
+tar -xvf files.tgz -o -C $ROOT
 
 # if there is no old conf file, create one
 if [ ! -f $FH/fslogger.conf ]
@@ -46,6 +46,10 @@ if [ ! -d $FH/logs ]; then mkdir $FH/logs; fi
 
 # make fslogger own some files
 chown --recursive fslogger:fslogger $FH
+
+# set the permissions for some files
+chmod 664 ${FH}/fslogger.{conf,conf.orig,js}
+chmod 775 ${FH}/logs
 
 # schedule fslogger to start on reboot
 chkconfig --level 2345 fslogger on
