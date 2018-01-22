@@ -208,7 +208,7 @@ function formatForCEF(data) {
   // score
   cef += ' deviceCustomFloatingPoint1Label=Score';
   cef += ' deviceCustomFloatingPoint1=';
-  cef += (new Number(data.score)).toPrecision(3);
+  cef += Math.round(data.score * 1000)/1000;
   
   // family bundle
   if (typeof(data.family_bundle) == 'string') {
@@ -439,6 +439,8 @@ var server = http.createServer( function(req, res) {
               serverLog('Received input larger than ' + MAXBODY);
             }
         });
+        
+        // prepare response to send later
         res.writeHead(200, {'Content-Type': 'text/plain'});
         res.end('ok');
         break;

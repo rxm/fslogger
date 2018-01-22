@@ -1,7 +1,8 @@
 /var/log/fslogger.log {
         weekly
         missingok
-        rotate 9
+        rotate 3
+        minsize 300k
         compress
         delaycompress
         notifempty
