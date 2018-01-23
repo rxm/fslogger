@@ -1,14 +1,14 @@
 
 # Write pBit detections to files
 
-> **Version 0.1.7** of fslogger, a Node server that writes POST requests to a file translating DeepXi JSON into ArcSight CEF
+> **Version 0.1.8** of fslogger, a Node server that writes POST requests to a file translating DeepXi JSON into ArcSight CEF
 
 ## Installing
 
 This is still a 0.1 version of the server script.  Note that:
 
 * The CEF format emitted is still in development.
-* Exit codes for the `init.d` scripts have not been checked against accepted practices
+* A process has started to change how the install will be done.  The installer script and `make centos` are in flux right now.
 * Time conversions make the assumption that the host running the server and the ArcSight instance are in the same timezone.
 
 The script `fslogger.js` has been tested with Node v6.4.0 and Node v8.9.3. To install it a few parameters need to be configured in `fslogger.conf` that needs to be in the directory from where the script is launched.  This is controlled by the string in `configPath` in the script.  If the configuration file is not found, a message is emitted and the server continues with its defaults.

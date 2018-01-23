@@ -1,4 +1,4 @@
-/opt/share/fslogger/logs/pbit.log {
+/opt/fslogger/logs/pbit.log {
         daily
         missingok
         compress

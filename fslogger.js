@@ -1,5 +1,7 @@
 /*
  *   Take the POST data and save it to a log
+ *
+ *   Version 0.1.8 from Tue, 23 Jan 2018
  */
 
 'use strict';
@@ -38,9 +40,14 @@ var e200 = '' +
 // stream to log file
 var logs = null;
 
+// are we debugging?
+var debugQ = false;
 
 // funtion that creates output
 var logger = function ( ) {};
+
+// in case we need high res time
+const tps = process.hrtime();
 
 /*
  *           ----- FUNCTIONS -----
@@ -110,10 +117,31 @@ function formatEpoch (epoch) {
   message: string to write
   => : undefined
 */
-function serverLog (message) {
-  var ts = new Date().toISOString();
+function serverLog (x, y) {
+  var mode, message, ts, now;
   
-  console.log(ts + '|' + message);
+  // figure out the arguments
+  if (y === undefined) {
+    // called with one parameter
+    message = x;
+    mode = 'ERROR'
+  } else {
+    // called with two args
+    message = y;
+    mode = x.toUpperCase();
+  }
+  
+  switch (mode) {
+    case 'DEBUG':
+      now = process.hrtime(tps);
+      now[0] = now[0] % 1000;
+      process.stdout.write(now[0] + '.' + now[1] + ' | ' + message + '\n');
+      break;
+    case 'ERROR':
+    default:
+      ts = new Date().toISOString();
+      console.log(ts + '|' + message);
+  }
 }
 
 /**
@@ -269,6 +297,8 @@ function ceflogger (logs, jsonstr) {
   var data;
   var badInputQ;
   
+  if (debugQ) serverLog('DEBUG', "Trying to parse JSON");
+  
   badInputQ = false;
   try {
     data = JSON.parse(jsonstr);
@@ -339,6 +369,9 @@ function readConfig () {
     // logfile
     logfile = typeof(config.logfile) === 'undefined' ? logfile : config.logfile;
     
+    // debug flag
+    debugQ = typeof(config.debug) === 'undefined' ? debugQ : config.debug;
+    
     // deal with logger
     lcode = config.logger;
     if (typeof(lcode) === 'undefined') {
@@ -356,6 +389,11 @@ function readConfig () {
     }
     
     // done with goodQ
+  }
+  
+  // set things up for debug
+  if (debugQ) {
+    logfile = 'stdout';
   }
   
 }
@@ -402,6 +440,7 @@ logs.on('error', (err) => {
 
 // re-open log file for log rotation
 process.on('SIGPIPE', () => {
+  serverLog('Reveived SIGPIPE');
   if (logfile != 'stderr' && logfile != 'stdout' ) {
     logs.end();
     logs = openLogStream(logfile, logOptions);
@@ -425,18 +464,27 @@ process.on('uncaughtException', (err) => {
 
 // create a server 
 var server = http.createServer( function(req, res) {
-
+  
     switch (req.method) {
       case 'POST':
-        var body = ''; 
+        var body = [];
+        var tot = 0;
         req.on('data', function (data) {
-            body += data;
+            if (debugQ) {
+              serverLog('debug', 'Got ' + data.length + ' bytes');
+            }
+
+            tot += data.length
+            if (tot > MAXBODY ) {
+              serverLog('Received input larger than ' + MAXBODY);
+            } else {
+              body.push(data);              
+            }
         });
         req.on('end', function () {
-            if (body.length < MAXBODY) {
-              logger(logs, body);
-            } else {
-              serverLog('Received input larger than ' + MAXBODY);
+            if (debugQ) serverLog('debug', 'Got end');
+            if (tot <= MAXBODY) {
+              logger(logs, Buffer.concat(body).toString());
             }
         });
         

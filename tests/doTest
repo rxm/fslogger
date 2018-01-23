@@ -12,6 +12,9 @@ URL="http://127.0.0.1:8888"
 # copy things to current directory
 cp ../fslogger.{js,conf} .
 
+# remove olg log file
+/bin/rm -f pbit.log
+
 $SERVER  2> /dev/null 1>server.log &
 pid=$!
 sleep 2
@@ -51,9 +54,28 @@ curl -s -X POST ${URL} -d@docA.json > /dev/null
 sleep 1
 kill -0 $pid 2> /dev/null || echo -n "Error on " && echo Test 9
 
+# does pbit.log match?
+pbitlogsum=$(md5 -q pbit.log)
+if [ $pbitlogsum == '4b3a8a274c1cc7962bb26211e92112bd' ]
+then 
+  echo CEF log is as expected
+else
+  echo CEF log incorrect
+fi
+
+# does server.log match?
+serverlogsum=$(awk -F'|' '{print $2}' server.log | md5 -q)
+if [ $serverlogsum == '14eb2c18ff42c02c8606658ab4dde3f6' ]
+then 
+  echo Server log is as expected
+else
+  echo Server log incorrect
+fi
+
+
 # cleanup
 kill $pid 2> /dev/null || echo "Failed to kill fslogger"
-(sleep 5; /bin/rm -f fslogger.{js,conf})&
+(sleep 1; /bin/rm -f fslogger.{js,conf})&
 
 
 echo "No errors should have been emitted"

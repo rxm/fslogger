@@ -18,7 +18,7 @@
     "logz",
     "fslogger"
   ],
-  "node": "MYGRP\\DESK01",
+  "node": "MYGRP\\DESKA",
   "score": 0.7617189512753867,
   "prob_type": "hunting",
   "@timestamp": "2018-01-18T13:21:17.436Z",

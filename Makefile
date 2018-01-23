@@ -14,7 +14,7 @@ MACTAR = --disable-copyfile --exclude .DS_Store
 ZIPEXT = $(shell hg id -i| head -1 | grep -oE '[a-f0-9]{5,}' | cut -b '1-5')
 
 C6 = systems/centos6/base
-C6HOME = /opt/share/fslogger
+C6HOME = /opt/fslogger
 BC6H = $(C6)$(C6HOME)
 
 centos6:
