@@ -1,7 +1,7 @@
 /*
  *   Take the POST data and save it to a log
  *
- *   Version 0.1.8 from Tue, 23 Jan 2018
+ *   Version 0.1.9 from Sun, 28 Jan 2018
  */
 
 'use strict';

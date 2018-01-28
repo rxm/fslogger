@@ -1,14 +1,13 @@
 
 # Write pBit detections to files
 
-> **Version 0.1.8** of fslogger, a Node server that writes POST requests to a file translating DeepXi JSON into ArcSight CEF
+> **Version 0.1.9** of fslogger, a Node server that writes POST requests to a file translating DeepXi JSON into ArcSight CEF
 
 ## Installing
 
 This is still a 0.1 version of the server script.  Note that:
 
 * The CEF format emitted is still in development.
-* A process has started to change how the install will be done.  The installer script and `make centos` are in flux right now.
 * Time conversions make the assumption that the host running the server and the ArcSight instance are in the same timezone.
 
 The script `fslogger.js` has been tested with Node v6.4.0 and Node v8.9.3. To install it a few parameters need to be configured in `fslogger.conf` that needs to be in the directory from where the script is launched.  This is controlled by the string in `configPath` in the script.  If the configuration file is not found, a message is emitted and the server continues with its defaults.
@@ -38,13 +37,13 @@ Sample data will show up in the `pbit.log` file
 
 ### Centos 6 install
 
-Using the `make centos6` target of the Makefile, a TAR file is created with an installer script.   Transfer the TAR file to the Centos 6 machine that will run `fslogger` and untar it in some temporary directory.  This will create a directory with two files: `installer`, a bash script, and `files.tgz` a compressed TAR file with `fslogger` and several system files.   Run the `installer` script, which will complain if it does not detect Nodejs.  
+Using the `make centos6` target of the Makefile, a TAR file is created with an installer script.   Transfer the TAR file to the Centos 6 machine that will run `fslogger` and untar it in some temporary directory.  This will create a directory with a few files, inclding `installer`, a bash script.  Run the `installer` script, which will complain if it does not detect Nodejs.  
 
 The script:
 
 * Creates a `fslogger` system user if one does not exist
-* Installs `fslogger` in `/opt/share/fslogger`
-* A `logs` directory for the DeepXi POSTs in `/opt/share/fslogger`
+* Installs `fslogger` in `/use/share/fslogger`
+* A `logs` directory for the DeepXi POSTs in `/usr/share/fslogger`
 * A script to use with `service`
 * A logrotate configuration for the server output (but not for the POST detections)
 * Sets `fslogger` to restart on reboot
@@ -57,13 +56,13 @@ As a super user:
 ``` bash
 # untar the files
 tar -xf fslogger-83d85.tar -C /tmp
-cd /tmp/fslogger-83d85
+cd /tmp/fslogger
 
 # run the installer
 ./installer
 
 # try it out
-cd /opt/share/fslogger
+cd /usr/share/fslogger
 service fslogger start
 curl http://127.0.0.1:8888         # returns some HTML
 curl -X POST http://127.0.0.1:8888 -d@doc.json && echo
