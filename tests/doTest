@@ -10,7 +10,17 @@ SERVER="$NODE fslogger.js"
 URL="http://127.0.0.1:8888"
 
 # copy things to current directory
-cp ../fslogger.{js,conf} .
+cp ../fslogger.js .
+
+cat <<EOC > fslogger.conf
+{
+  "debug": false,
+  "port": 8888,
+  "logfile": "pbit.log",
+  "timezoneStrings": { "300": "EST", "240": "EDT" },
+  "logger": "CEF Logger"
+}
+EOC
 
 # remove olg log file
 /bin/rm -f pbit.log
