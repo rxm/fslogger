@@ -19,7 +19,7 @@
 [ "$NETWORKING" = "no" ] && exit 0
 
 pidfile=/var/run/fslogger.pid
-fshome=/opt/fslogger
+fshome=/usr/share/fslogger
 node=/usr/bin/node
 # name of program for printout
 prog=fslogger

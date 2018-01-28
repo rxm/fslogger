@@ -1,0 +1,63 @@
+#!/bin/bash
+
+#
+#   INSTALL SCRIPT FOR fslogger
+#
+
+# set to yes to ignore the Nodejs check
+ignore=$1
+
+# Pretend root for testing. Comment out for production
+# testdir=$PWD/root
+
+# base directory to untar files.  Empty for root
+ROOT=${testdir}
+
+# fslogger home
+FH="$ROOT/usr/share/fslogger"
+
+
+NODE=/usr/bin/node
+if [[ -z $ignore && ! -x $NODE ]]
+then
+  echo   "Node not at $NODE"
+  printf 'You need to install Nodejs first.  Try\n'
+  printf ' curl --silent --location https://rpm.nodesource.com/setup_8.x'
+  printf ' | sudo bash -\n'
+  printf ' yum install nodejs\n'
+  exit 1
+fi
+
+# create a user if needed
+id -u fslogger > /dev/null 2>&1
+if [[ $? -ne 0 ]]; then adduser -r fslogger; fi
+  
+# install files
+[ -d $ROOT/etc/logrotate.d ] || mkdir -p $ROOT/etc/logrotate.d
+install -m 644 deepxi  $ROOT/etc/logrotate.d/deepxi
+install -m 644 fslogger  $ROOT/etc/logrotate.d/fslogger
+[ -d $ROOT/etc/rc.d/init.d ] || mkdir -p $ROOT/etc/rc.d/init.d
+install -b -m 754 init.sh $ROOT/etc/rc.d/init.d/fslogger
+
+[ -d $FH ] || mkdir -p $FH
+tar -xvf files.tar -o -C $FH
+
+
+# if there is no old conf file, create one
+if [ ! -f $FH/fslogger.conf ]
+then
+  cp $FH/fslogger.conf.orig $FH/fslogger.conf
+fi
+
+# a place to save the DeepXi detections
+if [ ! -d $FH/logs ]; then mkdir $FH/logs; fi
+
+# make fslogger own some files
+chown --recursive fslogger:fslogger $FH
+
+# set the permissions for some files
+chmod 664 ${FH}/fslogger.{conf,conf.orig,js}
+chmod 775 ${FH}/logs
+
+# schedule fslogger to start on reboot
+chkconfig --level 2345 fslogger on

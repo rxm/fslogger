@@ -1,5 +1,5 @@
 {
   "port": 8888,
-  "logfile": "./logs/pbit.log",
+  "logfile": "logs/pbit.log",
   "timezoneStrings": { "300": "EST", "240": "EDT" }
 }
