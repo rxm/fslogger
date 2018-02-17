@@ -37,7 +37,7 @@ Sample data will show up in the `pbit.log` file
 
 ### Centos 6 install
 
-Using the `make centos6` target of the Makefile, a TAR file is created with an installer script.   Transfer the TAR file to the Centos 6 machine that will run `fslogger` and untar it in some temporary directory.  This will create a directory with a few files, inclding `installer`, a bash script.  Run the `installer` script, which will complain if it does not detect Nodejs.  
+Using the `make centos6` target of the Makefile, a TAR file is created with an installer script.   Transfer the TAR file to the Centos 6 machine that will run `fslogger` and untar it in some temporary directory.  This will create a directory with a few files, including `installer`, a bash script.  Run the `installer` script, which will complain if it does not detect Nodejs.  
 
 The script:
 
