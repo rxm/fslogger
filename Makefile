@@ -5,7 +5,7 @@
 	
 NODE = node	
 
-BF = ReadMe.md fslogger.js tests/doc.json
+BF = ReadMe.md fslogger.js tests/doc{State,Heart}.json
 	
 # include if needed local changes	
 -include .makefile	
