@@ -1,0 +1,39 @@
+{
+    "cpuLoad": ".02",
+    "hostInWeek": 82,
+    "droppedTasksCountFloor": 0,
+    "licenseeName": "PermissionBit",
+    "licenseSerial": "XF-342-A3Z",
+    "current_timestamp": 1520090152705,
+    "postgresHealth": true,
+    "mathLayerHealth": true,
+    "licenseClass": "Demonstration",
+    "droppedTasksAlertThreshold": 3,
+    "lastUpdated": 1520090152672,
+    "expireCurrentDataAfter": "2419200000",
+    "cassandraHealth": true,
+    "magicDataTimestamp": 1519009646000,
+    "serverHost": "ip-10-55-0-243",
+    "hostAffected": 1,
+    "mathWorkers": [
+      "DeepXiNativeWorkerClient@localhost (1 workers)"
+    ],
+    "workers": [
+      "DeepXiNativeWorkerClient@localhost (1 workers)"
+    ],
+    "licenseExpiringSoon": false,
+    "@version": "1",
+    "@timestamp": "2018-03-03T15:15:53.058Z",
+    "maxHostInWeek": 100,
+    "health": true,
+    "hostTotal": 17,
+    "recentTaskCount": 9,
+    "licenseExpired": false,
+    "activityRecordsInWeek": 131200,
+    "nonlocalMathDataFileNames": [],
+    "host": "127.0.0.1",
+    "licenseExpiration": 1539475200000,
+    "recentStateCount": 319,
+    "msg_type": "heartbeat",
+    "licenseCompliance": true
+}

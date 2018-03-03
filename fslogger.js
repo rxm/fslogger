@@ -1,7 +1,7 @@
 /*
  *   Take the POST data and save it to a log
  *
- *   Version 0.1.9 from Sun, 28 Jan 2018
+ *   Version 0.2.0 from Fri Mar 2 18:23:36 EST 2018
  */
 
 'use strict';
@@ -17,6 +17,9 @@ var process = require('process');
 
 // largest acceptable body in characters
 var MAXBODY = 20000;
+
+// minimal accepted data version
+var DATAVER = { major: 1, minor: 2};
 
 var port = 8888;
 
@@ -114,8 +117,10 @@ function formatEpoch (epoch) {
 /**
   Write a message to the server log
 
-  message: string to write
-  => : undefined
+  if only message, assume ERROR
+  modes: DEBUG ERROR
+  (mode, message) => : undefined
+  (message) => : undefined
 */
 function serverLog (x, y) {
   var mode, message, ts, now;
@@ -128,19 +133,22 @@ function serverLog (x, y) {
   } else {
     // called with two args
     message = y;
-    mode = x.toUpperCase();
+    mode = x;
   }
   
   switch (mode) {
     case 'DEBUG':
+      if (! debugQ ) break;
       now = process.hrtime(tps);
       now[0] = now[0] % 1000;
       process.stdout.write(now[0] + '.' + now[1] + ' | ' + message + '\n');
       break;
     case 'ERROR':
-    default:
       ts = new Date().toISOString();
       console.log(ts + '|' + message);
+      break;
+    default:
+      // do nothing
   }
 }
 
@@ -179,28 +187,59 @@ function cefencode (data) {
 }
 
 /**
+   check that the data version format is as expected
 
+   ({major: int, minor: int}, string) => true|false
 */
-function formatForCEF(data) {
-  var cef, s, sev, ex, regex, match;
-    
+function versionOK(expected, versionString) {
+  
+  var va;
+  
+  va = versionString.split('.');
+  
+  // auto casting in action
+  return (expected.major == va[0] && expected.minor <= va[1]);
+}
+
+/**
+  data is the JSON from pBit and cef is the log entry in CEF
+*/
+function stateToCEF(data) {
+  var cef, s, sev, ex, regex, match, infoEventQ, machineName;
+  
+  if (! versionOK(DATAVER, data.json_schema_version) ) {
+    serverLog('ERROR',
+      'Got innapropriate version of data: ' +  data.json_schema_version);
+    return;
+  }
+  
+  machineName = data.node;
+  if (data.ip_address != '127.0.0.1') {
+    machineName = data.ip_address;
+  }
+  
+  // common part of the format
   cef = formatEpoch(data.run_start);
-  cef += ' ' + data.node;
+  cef += ' ' + machineName;
   cef += ' CEF:0|PermissionBit|DeepXi|1.0';
   
   // device event class id
-  if (typeof(data.family.uuid) == 'string') {
-    cef += '|' + data.family.uuid;
+  if (typeof(data.activity.uuid) == 'string') {
+    cef += '|' + data.activity.uuid;
   } else {
     cef += '|Null Event';
   }
   
   // device event name
+  infoEventQ = false;
   switch (data.prob_type) {
     case 'sensing': cef += '|Sensing Detection'; break;
     case 'hunting': cef += '|Hunting Detection'; break;
     case 'imputed': cef += '|Imputed Detection'; break;
-    default: cef += '|Information Event';
+    default: 
+      cef += '|Other State';
+      infoEventQ = true;
+      break;
   }
   
   // severity
@@ -229,8 +268,12 @@ function formatForCEF(data) {
   
   cef += '|'
   
+  // MAC
+  cef += 'dvcmac=';
+  cef += (data.mac_address).match(/(..)/g).join(':');  
+  
   // process summary
-  cef += 'deviceCustomString1Label=processSummary';
+  cef += ' deviceCustomString1Label=processSummary';
   cef += ' deviceCustomString1=' + cefencode(data.process_summary);
   
   // score
@@ -270,13 +313,13 @@ function formatForCEF(data) {
   
   // do we have exemplars
   if (
-    typeof(data.family.exemplars) != 'undefined' && 
-    data.family.exemplars != null
+    typeof(data.activity.exemplars) != 'undefined' && 
+    data.activity.exemplars != null
   ) {
     regex = /sha256:([a-f0-9]+)/g;
     ex = 'SHA256 of malware behaving like this:';
     
-    while ( (match = regex.exec(data.family.exemplars)) !== null) {
+    while ( (match = regex.exec(data.activity.exemplars)) !== null) {
       ex += ' ' + match[1];
     }
     
@@ -294,8 +337,7 @@ function formatForCEF(data) {
     => : undefined
 */
 function ceflogger (logs, jsonstr) {
-  var data;
-  var badInputQ;
+  var data, badInputQ, mt;
   
   if (debugQ) serverLog('DEBUG', "Trying to parse JSON");
   
@@ -311,7 +353,24 @@ function ceflogger (logs, jsonstr) {
   if (! badInputQ) {
     // figure out event class
     try {
-      logs.write(formatForCEF(data) + '\n', 'utf8', () => {} );
+      switch (data.msg_type) {
+        case 'state':
+          logs.write(stateToCEF(data) + '\n', 'utf8', () => {} );
+          break;
+        case 'heartbeat':
+        case 'live_endpoint':
+        case 'registration':
+        case 'deregistration':
+          serverLog('ERROR', 'Got info message');
+          break;
+        default:
+          if ( typeof(data.msg_type) === 'undefined') {
+            mt = 'No message type defined';
+          } else {
+            mt = 'Unexpexted message type ' + data.msg_type;
+          }
+          serverLog('ERROR', mt);
+      }
     } catch (err) {
       serverLog("Could not write message: " + 
          jsonstr.replace(/[ \t\n]/g, '').substring(0, 40) + 
@@ -471,7 +530,7 @@ var server = http.createServer( function(req, res) {
         var tot = 0;
         req.on('data', function (data) {
             if (debugQ) {
-              serverLog('debug', 'Got ' + data.length + ' bytes');
+              serverLog('DEBUG', 'Got ' + data.length + ' bytes');
             }
 
             tot += data.length
@@ -482,7 +541,7 @@ var server = http.createServer( function(req, res) {
             }
         });
         req.on('end', function () {
-            if (debugQ) serverLog('debug', 'Got end');
+            if (debugQ) serverLog('DEBUG', 'Got end');
             if (tot <= MAXBODY) {
               logger(logs, Buffer.concat(body).toString());
             }
@@ -504,7 +563,7 @@ var server = http.createServer( function(req, res) {
         break;
         
       default:
-        serverLog('Unrecognized method');
+        serverLog('Unrecognized HTTP method verb ' + req.method);
         res.writeHead(405, {'Content-Type': 'text/plain'});
         res.end('error');
     }

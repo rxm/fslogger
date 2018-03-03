@@ -44,29 +44,21 @@ res=$(curl -s -I -X POST ${URL} | head -1)
 res=$(curl -s -I -X PUT ${URL}/test | head -1)
 [[ "$res" == 'HTTP/1.1 405'*  ]] || echo -n "Error on " && echo Test 5
 
-# test big input
-curl -s -X POST ${URL} -d@big.json > /dev/null
-sleep 1
-kill -0 $pid 2> /dev/null || echo -n "Error on " && echo Test 6
 
-# test irrelevant JSON
-curl -s -X POST ${URL} -d@other.json > /dev/null
-sleep 1
-kill -0 $pid 2> /dev/null || echo -n "Error on " && echo Test 7
+n=6
+declare -a testJsons=("big" "other" "docA" "docB" "docC" "docHeart")
+for jf in "${testJsons[@]}"
+do
+  curl -s -X POST ${URL} -d@${jf}.json > /dev/null
+  sleep 1
+  kill -0 $pid 2> /dev/null || echo -n "Error on " && echo Test $n
+  n=$((n+1))
+done
 
-# do something normal
-curl -s -X POST ${URL} -d@doc.json > /dev/null
-sleep 1
-kill -0 $pid 2> /dev/null || echo -n "Error on " && echo Test 8
-
-# do something else 
-curl -s -X POST ${URL} -d@docA.json > /dev/null
-sleep 1
-kill -0 $pid 2> /dev/null || echo -n "Error on " && echo Test 9
 
 # does pbit.log match?
 pbitlogsum=$(md5 -q pbit.log)
-if [ $pbitlogsum == '4b3a8a274c1cc7962bb26211e92112bd' ]
+if [ $pbitlogsum == '909a5eb857335c87039d8d72240ae7d0' ]
 then 
   echo CEF log is as expected
 else
@@ -75,7 +67,7 @@ fi
 
 # does server.log match?
 serverlogsum=$(awk -F'|' '{print $2}' server.log | md5 -q)
-if [ $serverlogsum == '14eb2c18ff42c02c8606658ab4dde3f6' ]
+if [ $serverlogsum == '355816df4382f2e7960c54c91775d35d' ]
 then 
   echo Server log is as expected
 else
