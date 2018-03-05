@@ -213,7 +213,7 @@ function ceflogger (logs, jsonstr) {
         case 'live_endpoint':
         case 'registration':
         case 'deregistration':
-          serverLog('ERROR', 'Got info message');
+          logs.write(msgToCEF(data) + '\n', 'utf8', () => {} );
           break;
         default:
           if ( typeof(data.msg_type) === 'undefined') {
@@ -367,7 +367,7 @@ function stateToCEF(data) {
 var MAXGAP = 1000*(60*60);
 
 function heartToCEF(data) {
-  var cef, machineName, score, message, serverIssueQ;
+  var cef, machineName, score, message, serverIssueQ, licIssueQ;
   
   cef = formatEpoch(0);
   
@@ -402,36 +402,147 @@ function heartToCEF(data) {
   if (data.current_timestamp - data.lastUpdated > MAXGAP) {
     // been too long
     score = 5;
-  } 
-  if (data.licenseExpiringSoon) score = 6;
-  if (data.licenseExpired) score = 7;
-  
-  message = '';
-  if (score >= 5) {
-    message = 'Please check your license. ';
   }
   
+  licIssueQ = false;
+  if (data.licenseExpiringSoon) { score += 1; licIssueQ = true; }
+  if (data.licenseExpired) { score += 3; licIssueQ = true; }
+  
   serverIssueQ = false;
-  if (!data.postgresHealth) { score += 1; serverIssueQ = true; }
-  if (!data.mathLayerHealth) { score += 1; serverIssueQ = true; }
-  if (!data.cassandraHealth) { score += 1; serverIssueQ = true; }
+  if (!data.postgresHealth) { score += 3; serverIssueQ = true; }
+  if (!data.mathLayerHealth) { score += 3; serverIssueQ = true; }
+  if (!data.cassandraHealth) { score += 3; serverIssueQ = true; }
+  
+  message = '';
+  if (licIssueQ) {
+    message = 'Please check your license. ';
+  }
   
   if (serverIssueQ) {
     message += 'Compute server issues. '
   }
   
+  // only if none of the previous applied
+  if ( ! serverIssueQ && ! licIssueQ ) {
+    message = 'Compute server operation as expected'
+  }
+  
+  // score can be larger than 10
+  if (score > 10) score = 10;
+  cef += '|' + score;
+    
+  // extensions
+  cef += '|message=' + message;
+
+  return cef;
+}//
+//  HANDLE SIMPLE MESSAGES
+//
+
+var MAXGAP = 1000*(60*60);
+
+/**
+
+*/
+function msgToCEF(data) {
+  var cef, machineName, score, type, message, delta;
+  
+  cef = formatEpoch(0);
+  
+  serverLog('DEBUG', 'processing info msg');
+  
+  // if ( ! versionOK(DATAVER, data.json_schema_version) ) {
+  if ( ! versionOK(MSGVER, data.json_schema_version) ) {
+    serverLog('ERROR',
+      'Got innapropriate version of data: ' +  data.json_schema_version);
+    return cef;
+  }
+
+  machineName = data.name;
+  if (data.host != '127.0.0.1') {
+    machineName = data.host;
+  }
+  
+  // common part of the format
+  cef = formatEpoch(data.current_timestamp);
+  cef += ' ' + machineName;
+  cef += ' CEF:0|PermissionBit|DeepXi|1.0';
+  
+  // event type
+  switch(data.msg_type) {
+    case 'registration':
+      type = 'Registration';
+      message = 'PBit sensor switched on'
+      break;
+    case 'live_endpoint':
+      type = 'Heartbeat';
+      message = deltaMessage(data.current_timestamp,
+        data.most_recent_blob_timestamp);
+      break;
+    case 'deregistration':
+      type = 'Deregistration';
+      message = 'PBit sensor switched off'
+      break;
+    default:
+      type = '?????';
+  }
+  
+  cef += '|' + type;
+  
+  //
+  // score
+  //
+  score = 1;
+  if (data.current_timestamp - data.most_recent_blob_timestamp > MAXGAP) {
+    score = 6;
+  }
+    
   cef += '|' + score;
   
   
   // extensions
   cef += '|'
-  if (score == 0) {
-    cef += 'message=System operation as expected';
-  } else {
-    cef += message;
-  }
+  cef += 'message=' + cefencode(message);
 
   return cef;
+}
+
+
+function deltaMessage(current, recent) {
+  var msg, d;
+  
+  msg = 'Sensor sending data';
+  
+  if (current - recent > MAXGAP ) {
+    // been too long without data
+    d = (current - recent)/1000;
+    msg = 'Sensor has not sent data in ';
+    if (d<60) {
+      msg +=  Math.ceil(d) + ' seconds';
+    } else if ( d < 3600 ) {
+      msg += Math.ceil( d/60 ) + ' minutes';
+    } else if ( d < 129600 ) {
+      msg += addUnits(Math.round( d/3600 ), 'hour', 'hours');
+    } else {
+      msg += addUnits(Math.round( d/86400 ), 'day', 'days');
+    }
+  }
+  
+  return msg;
+}
+
+function addUnits(x, sing, plural) {
+  var msg;
+  
+  if (x==0) {
+    msg = 'less than one ' + sing;
+  } else if (x==1) {
+    msg = '1 ' + sing;
+  } else {
+    msg = x + ' ' + plural;
+  }
+  
+  return msg;
 }
 /**
   Write a message to the server log

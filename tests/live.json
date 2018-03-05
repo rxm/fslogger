@@ -1,0 +1,17 @@
+{
+    "@timestamp": "2018-03-04T11:42:12.817Z",
+    "current_timestamp": 1520163731459,
+    "most_recent_blob_timestamp": 1520155806798,
+    "cached_states_count": 22,
+    "platform_architecture": "Amd64",
+    "name": "MYGRP\\DESK08",
+    "os_major_version": "6",
+    "cached_blobs_count": 24,
+    "host": "127.0.0.1",
+    "ip_address": "127.0.0.1",
+    "msg_type": "live_endpoint",
+    "most_recent_state_timestamp": 1520163396645,
+    "mac_address": "FFFFFFFFFFFF",
+    "@version": "1",
+    "cached_alerts_count": 3
+}

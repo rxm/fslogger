@@ -14,7 +14,16 @@ BF = ReadMe.md fslogger.js tests/doc{State,Heart}.json
 MACTAR = --disable-copyfile --exclude .DS_Store
 ZIPEXT = $(shell hg id -i| head -1 | grep -oE '[a-f0-9]{5,}' | cut -b '1-5')
 
-CAT = head.jp time.jp ceflog.jp state.jp heart.jp aux.jp readconf.jp main.jp
+# pieces of fslogger in the right order
+CAT = head.jp \
+    time.jp \
+    ceflog.jp \
+    state.jp \
+    heart.jp \
+    msg.jp \
+    aux.jp \
+    readconf.jp \
+    main.jp
 
 fslogger.js: $(CAT)
 	cat $(CAT) > fslogger.js

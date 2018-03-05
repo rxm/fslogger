@@ -1,5 +1,8 @@
 #!/bin/bash
 
+CLEANUP=$1
+CLEANUP=${CLEANUP:-no}
+
 # full path to node
 NODE=/Users/ronnie/Unix/Node/bin/node
 
@@ -47,7 +50,17 @@ res=$(curl -s -I -X PUT ${URL}/test | head -1)
 
 # Loop over different JSON files
 n=6
-declare -a testJsons=("big" "other" "stateA" "badA" "stateB" "heart")
+declare -a testJsons=(
+  "live"
+  "heart"
+  "badA"
+  "stateB"
+  "stateA"
+  "dereg"
+  "registration"
+  "other"
+  "big"
+)
 for jf in "${testJsons[@]}"
 do
   curl -s -X POST ${URL} -d@${jf}.json > /dev/null
@@ -59,7 +72,7 @@ done
 
 # does pbit.log match?
 pbitlogsum=$(md5 -q pbit.log)
-if [ $pbitlogsum == '6a6c2e59eb5d7ced7b70ec228b995fff' ]
+if [ $pbitlogsum == '5f7a07670a477fa1580923ccecb33f5a' ]
 then 
   echo CEF log is as expected
 else
@@ -68,7 +81,7 @@ fi
 
 # does server.log match?
 serverlogsum=$(awk -F'|' '{print $2}' server.log | md5 -q)
-if [ $serverlogsum == 'd6f87ef13d38d3037dfb8766e90ac91d' ]
+if [ $serverlogsum == '541f8069e7d76892202186f9f78949e6' ]
 then 
   echo Server log is as expected
 else
@@ -78,7 +91,10 @@ fi
 
 # cleanup
 kill $pid 2> /dev/null || echo "Failed to kill fslogger"
-(sleep 1; /bin/rm -f fslogger.{js,conf})&
+if [[ $CLEANUP == 'yes' ]]
+then
+    (sleep 1; /bin/rm -f fslogger.{js,conf})&
+fi
 
 
 echo "No errors should have been emitted"

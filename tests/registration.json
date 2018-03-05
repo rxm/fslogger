@@ -1,0 +1,12 @@
+{
+    "@version": "1",
+    "@timestamp": "2018-02-27T14:52:29.969Z",
+    "msg_type": "registration",
+    "name": "MYGRP\\VBOX36",
+    "host": "127.0.0.1",
+    "mac_address": "FFFFFFFFFFFF",
+    "os_major_version": "16299",
+    "current_timestamp": 1519743149102,
+    "ip_address": "127.0.0.1",
+    "platform_architecture": "Amd64"
+}
