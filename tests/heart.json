@@ -11,7 +11,7 @@
     "droppedTasksAlertThreshold": 3,
     "lastUpdated": 1520090152672,
     "expireCurrentDataAfter": "2419200000",
-    "cassandraHealth": true,
+    "cassandraHealth": false,
     "magicDataTimestamp": 1519009646000,
     "serverHost": "ip-10-55-0-243",
     "hostAffected": 1,

@@ -45,8 +45,9 @@ res=$(curl -s -I -X PUT ${URL}/test | head -1)
 [[ "$res" == 'HTTP/1.1 405'*  ]] || echo -n "Error on " && echo Test 5
 
 
+# Loop over different JSON files
 n=6
-declare -a testJsons=("big" "other" "docA" "docB" "docState" "docHeart")
+declare -a testJsons=("big" "other" "docA" "docC" "docState" "heart")
 for jf in "${testJsons[@]}"
 do
   curl -s -X POST ${URL} -d@${jf}.json > /dev/null

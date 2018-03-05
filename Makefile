@@ -15,7 +15,10 @@ MACTAR = --disable-copyfile --exclude .DS_Store
 ZIPEXT = $(shell hg id -i| head -1 | grep -oE '[a-f0-9]{5,}' | cut -b '1-5')
 
 
-centos6:
+fslogger.js: head.jp time.jp ceflog.jp state.jp heart.jp aux.jp readconf.jp main.jp 
+	cat head.jp time.jp ceflog.jp state.jp heart.jp aux.jp readconf.jp main.jp > fslogger.js
+
+centos6: fslogger.js
 	tar -cf systems/centos6/files.tar $(MACTAR) $(BF)
 	cd systems/centos6; \
 	     tar -uf files.tar $(MACTAR) fslogger.conf.orig
@@ -23,10 +26,10 @@ centos6:
 	     -C systems -s /centos6/fslogger/ centos6
 	echo rm systems/centos6/files.tar
 	
-test:
+test: fslogger.js
 	@ cd tests; doTest
 
 clean:
-	/bin/rm -f pbit.log{,.1} fslogger-*.{zip,tgz,tar} server.log
+	/bin/rm -f fslogger.js pbit.log{,.1} fslogger-*.{zip,tgz,tar} server.log
 	/bin/rm -f tests/{server.log,pbit.log}{,.1}
 	/bin/rm -f -r systems/centos6/files.tar

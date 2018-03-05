@@ -91,65 +91,33 @@ function tzString (off) {
   =>: a formatted string
 */
 function formatEpoch (epoch) {
+  
+  var date, day, hour, min, sec, milli, mns, ds, hs, ms, ss, mms, str;
+  
+  if (epoch == 0) {
+    return "Jan 01 00:00:00.000 UTC 1970";
+  }
     
-    var date = new Date(epoch);
-    var day = date.getDate();
-    var hour = date.getHours();
-    var min = date.getMinutes();
-    var sec = date.getSeconds();
-    var milli = date.getMilliseconds();
-
-    var mns = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul',
-                    'Aug','Sep','Oct','Nov','Dec'][date.getMonth()];
-    var ds = (day < 10 ? "0" : "") + day;
-    var hs = (hour < 10 ? "0" : "") + hour;
-    var ms = (min < 10 ? "0" : "") + min;
-    var ss = (sec < 10 ? "0" : "") + sec;
-    var mms = (milli > 99 ? "" : (milli > 9 ? '0' : '00')) + milli;
-
-    var str = mns + ' ' + ds + ' ' + date.getFullYear() + ' ' +  hs + 
-                  ":" + ms + ":" + ss + '.' + mms + 
-                  tzString(date.getTimezoneOffset());
-
-    return str;
-}
-
-/**
-  Write a message to the server log
-
-  if only message, assume ERROR
-  modes: DEBUG ERROR
-  (mode, message) => : undefined
-  (message) => : undefined
-*/
-function serverLog (x, y) {
-  var mode, message, ts, now;
+  date = new Date(epoch);
+  day = date.getDate();
+  hour = date.getHours();
+  min = date.getMinutes();
+  sec = date.getSeconds();
+  milli = date.getMilliseconds();
   
-  // figure out the arguments
-  if (y === undefined) {
-    // called with one parameter
-    message = x;
-    mode = 'ERROR'
-  } else {
-    // called with two args
-    message = y;
-    mode = x;
-  }
-  
-  switch (mode) {
-    case 'DEBUG':
-      if (! debugQ ) break;
-      now = process.hrtime(tps);
-      now[0] = now[0] % 1000;
-      process.stdout.write(now[0] + '.' + now[1] + ' | ' + message + '\n');
-      break;
-    case 'ERROR':
-      ts = new Date().toISOString();
-      console.log(ts + '|' + message);
-      break;
-    default:
-      // do nothing
-  }
+  mns = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul',
+              'Aug','Sep','Oct','Nov','Dec'][date.getMonth()];
+  ds = (day < 10 ? "0" : "") + day;
+  hs = (hour < 10 ? "0" : "") + hour;
+  ms = (min < 10 ? "0" : "") + min;
+  ss = (sec < 10 ? "0" : "") + sec;
+  mms = (milli > 99 ? "" : (milli > 9 ? '0' : '00')) + milli;
+
+  str = mns + ' ' + ds + ' ' + date.getFullYear() + ' ' +  hs + 
+                ":" + ms + ":" + ss + '.' + mms + 
+                tzString(date.getTimezoneOffset());
+
+  return str;
 }
 
 /**
@@ -195,22 +163,85 @@ function versionOK(expected, versionString) {
   
   var va;
   
+  if (expected.major == 0 && expected.minor == 0) {
+    return true;
+  }
+  
+  if (typeof(versionString) !== 'string') {
+    return false;
+  }
+  
   va = versionString.split('.');
   
   // auto casting in action
   return (expected.major == va[0] && expected.minor <= va[1]);
 }
 
+
+/** 
+    Convert a JSON string to CEF format and write it to a log stream
+
+    logs: a WriteStream, the log to write the information in jsonstr
+    jsonstr: a string serialized JSON
+    => : undefined
+*/
+function ceflogger (logs, jsonstr) {
+  var data, badInputQ, mt;
+  
+  if (debugQ) serverLog('DEBUG', "Trying to parse JSON");
+  
+  badInputQ = false;
+  try {
+    data = JSON.parse(jsonstr);
+  } catch (e) {
+    // did not parse correctly
+    serverLog("json parse error");
+    badInputQ = true;
+  }
+  
+  if (! badInputQ) {
+    // figure out event class
+    try {
+      switch (data.msg_type) {
+        case 'state':
+          logs.write(stateToCEF(data) + '\n', 'utf8', () => {} );
+          break;
+        case 'heartbeat':
+          logs.write(heartToCEF(data) + '\n', 'utf8', () => {} );
+          break;
+        case 'live_endpoint':
+        case 'registration':
+        case 'deregistration':
+          serverLog('ERROR', 'Got info message');
+          break;
+        default:
+          if ( typeof(data.msg_type) === 'undefined') {
+            mt = 'No message type defined';
+          } else {
+            mt = 'Unexpexted message type ' + data.msg_type;
+          }
+          serverLog('ERROR', mt);
+      }
+    } catch (err) {
+      serverLog("Could not write message: " + 
+         jsonstr.replace(/[ \t\n]/g, '').substring(0, 40) + 
+         "... " + err);
+    }
+    
+  }
+}
 /**
   data is the JSON from pBit and cef is the log entry in CEF
 */
 function stateToCEF(data) {
   var cef, s, sev, ex, regex, match, infoEventQ, machineName;
   
+  cef = formatEpoch(0);
+  
   if (! versionOK(DATAVER, data.json_schema_version) ) {
     serverLog('ERROR',
       'Got innapropriate version of data: ' +  data.json_schema_version);
-    return;
+    return cef;
   }
   
   machineName = data.node;
@@ -329,57 +360,137 @@ function stateToCEF(data) {
   return cef;
 }
 
-/** 
-    Convert a JSON string to CEF format and write it to a log stream
+/**
 
-    logs: a WriteStream, the log to write the information in jsonstr
-    jsonstr: a string serialized JSON
-    => : undefined
 */
-function ceflogger (logs, jsonstr) {
-  var data, badInputQ, mt;
+var MAXGAP = 1000*(60*60);
+
+function heartToCEF(data) {
+  var cef, machineName, score, message, serverIssueQ;
   
-  if (debugQ) serverLog('DEBUG', "Trying to parse JSON");
+  cef = formatEpoch(0);
   
-  badInputQ = false;
-  try {
-    data = JSON.parse(jsonstr);
-  } catch (e) {
-    // did not parse correctly
-    serverLog("json parse error");
-    badInputQ = true;
+  serverLog('DEBUG', 'processing heartbeat');
+  
+  // if ( ! versionOK(DATAVER, data.json_schema_version) ) {
+  if ( ! versionOK({major: 0, minor: 0}, data.json_schema_version) ) {
+    serverLog('ERROR',
+      'Got innapropriate version of data: ' +  data.json_schema_version);
+    return cef;
+  }
+
+  machineName = data.serverHost;
+  if (data.host != '127.0.0.1') {
+    machineName = data.host;
   }
   
-  if (! badInputQ) {
-    // figure out event class
-    try {
-      switch (data.msg_type) {
-        case 'state':
-          logs.write(stateToCEF(data) + '\n', 'utf8', () => {} );
-          break;
-        case 'heartbeat':
-        case 'live_endpoint':
-        case 'registration':
-        case 'deregistration':
-          serverLog('ERROR', 'Got info message');
-          break;
-        default:
-          if ( typeof(data.msg_type) === 'undefined') {
-            mt = 'No message type defined';
-          } else {
-            mt = 'Unexpexted message type ' + data.msg_type;
-          }
-          serverLog('ERROR', mt);
-      }
-    } catch (err) {
-      serverLog("Could not write message: " + 
-         jsonstr.replace(/[ \t\n]/g, '').substring(0, 40) + 
-         "... " + err);
-    }
-    
+  // common part of the format
+  cef = formatEpoch(data.current_timestamp);
+  cef += ' ' + machineName;
+  cef += ' CEF:0|PermissionBit|DeepXi|1.0';
+  
+  // event type
+  cef += '|Heartbeat'
+  
+  //
+  // score
+  //
+  score = 0;
+  
+  // has it been long since last update
+  if (data.current_timestamp - data.lastUpdated > MAXGAP) {
+    // been too long
+    score = 5;
+  } 
+  if (data.licenseExpiringSoon) score = 6;
+  if (data.licenseExpired) score = 7;
+  
+  message = '';
+  if (score >= 5) {
+    message = 'Please check your license. ';
+  }
+  
+  serverIssueQ = false;
+  if (!data.postgresHealth) { score += 1; serverIssueQ = true; }
+  if (!data.mathLayerHealth) { score += 1; serverIssueQ = true; }
+  if (!data.cassandraHealth) { score += 1; serverIssueQ = true; }
+  
+  if (serverIssueQ) {
+    message += 'Compute server issues. '
+  }
+  
+  cef += '|' + score;
+  
+  
+  // extensions
+  cef += '|'
+  if (score == 0) {
+    cef += 'message=System operation as expected';
+  } else {
+    cef += message;
+  }
+
+  return cef;
+}
+/**
+  Write a message to the server log
+
+  if only message, assume ERROR
+  modes: DEBUG ERROR
+  (mode, message) => : undefined
+  (message) => : undefined
+*/
+function serverLog (x, y) {
+  var mode, message, ts, now;
+  
+  // figure out the arguments
+  if (y === undefined) {
+    // called with one parameter
+    message = x;
+    mode = 'ERROR'
+  } else {
+    // called with two args
+    message = y;
+    mode = x;
+  }
+  
+  switch (mode) {
+    case 'DEBUG':
+      if (! debugQ ) break;
+      now = process.hrtime(tps);
+      now[0] = now[0] % 1000;
+      process.stdout.write(now[0] + '.' + now[1] + ' | ' + message + '\n');
+      break;
+    case 'ERROR':
+      ts = new Date().toISOString();
+      console.log(ts + '|' + message);
+      break;
+    default:
+      // do nothing
   }
 }
 
+
+/**
+  Return a stream to send the logs to
+  logfile: a string with path | stderr | stdout
+  options: an object with the optons needed by createWS
+
+  => : a stream
+*/
+function openLogStream(logfile, options) {
+  var logs;
+  
+  if (logfile == 'stderr') {
+    logs = process.stderr;
+  } else if (logfile == 'stdout') {
+    logs = process.stdout;
+  } else {
+    logs = fs.createWriteStream(logfile, options);
+  }
+  
+  return logs;
+}
 /**
   Read configuration file
 
@@ -457,26 +568,6 @@ function readConfig () {
   
 }
 
-/**
-  Return a stream to send the logs to
-  logfile: a string with path | stderr | stdout
-  options: an object with the optons needed by createWS
-
-  => : a stream
-*/
-function openLogStream(logfile, options) {
-  var logs;
-  
-  if (logfile == 'stderr') {
-    logs = process.stderr;
-  } else if (logfile == 'stdout') {
-    logs = process.stdout;
-  } else {
-    logs = fs.createWriteStream(logfile, options);
-  }
-  
-  return logs;
-}
 
 /*
  *
