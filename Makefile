@@ -14,9 +14,10 @@ BF = ReadMe.md fslogger.js tests/doc{State,Heart}.json
 MACTAR = --disable-copyfile --exclude .DS_Store
 ZIPEXT = $(shell hg id -i| head -1 | grep -oE '[a-f0-9]{5,}' | cut -b '1-5')
 
+CAT = head.jp time.jp ceflog.jp state.jp heart.jp aux.jp readconf.jp main.jp
 
-fslogger.js: head.jp time.jp ceflog.jp state.jp heart.jp aux.jp readconf.jp main.jp 
-	cat head.jp time.jp ceflog.jp state.jp heart.jp aux.jp readconf.jp main.jp > fslogger.js
+fslogger.js: $(CAT)
+	cat $(CAT) > fslogger.js
 
 centos6: fslogger.js
 	tar -cf systems/centos6/files.tar $(MACTAR) $(BF)

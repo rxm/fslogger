@@ -59,7 +59,7 @@ done
 
 # does pbit.log match?
 pbitlogsum=$(md5 -q pbit.log)
-if [ $pbitlogsum == '909a5eb857335c87039d8d72240ae7d0' ]
+if [ $pbitlogsum == '6a6c2e59eb5d7ced7b70ec228b995fff' ]
 then 
   echo CEF log is as expected
 else
@@ -68,7 +68,7 @@ fi
 
 # does server.log match?
 serverlogsum=$(awk -F'|' '{print $2}' server.log | md5 -q)
-if [ $serverlogsum == '355816df4382f2e7960c54c91775d35d' ]
+if [ $serverlogsum == 'd6f87ef13d38d3037dfb8766e90ac91d' ]
 then 
   echo Server log is as expected
 else

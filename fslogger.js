@@ -20,6 +20,7 @@ var MAXBODY = 20000;
 
 // minimal accepted data version
 var DATAVER = { major: 1, minor: 2};
+var MSGVER = {major: 0, minor: 0};  // should be the same as DATAVER
 
 var port = 8888;
 
@@ -373,7 +374,7 @@ function heartToCEF(data) {
   serverLog('DEBUG', 'processing heartbeat');
   
   // if ( ! versionOK(DATAVER, data.json_schema_version) ) {
-  if ( ! versionOK({major: 0, minor: 0}, data.json_schema_version) ) {
+  if ( ! versionOK(MSGVER, data.json_schema_version) ) {
     serverLog('ERROR',
       'Got innapropriate version of data: ' +  data.json_schema_version);
     return cef;
