@@ -245,10 +245,8 @@ function stateToCEF(data) {
     return cef;
   }
   
-  machineName = data.node;
-  if (data.ip_address != '127.0.0.1') {
-    machineName = data.ip_address;
-  }
+  // avoid data.node;
+  machineName = data.ip_address;
   
   // common part of the format
   cef = formatEpoch(data.run_start);
@@ -380,10 +378,8 @@ function heartToCEF(data) {
     return cef;
   }
 
-  machineName = data.serverHost;
-  if (data.host != '127.0.0.1') {
-    machineName = data.host;
-  }
+  // avoid data.serverHost
+  machineName = data.host;
   
   // common part of the format
   cef = formatEpoch(data.current_timestamp);
@@ -458,10 +454,8 @@ function msgToCEF(data) {
     return cef;
   }
 
-  machineName = data.name;
-  if (data.host != '127.0.0.1') {
-    machineName = data.host;
-  }
+  // avoid data.name;
+  machineName = data.host;
   
   // common part of the format
   cef = formatEpoch(data.current_timestamp);

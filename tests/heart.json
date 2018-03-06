@@ -31,7 +31,7 @@
     "licenseExpired": false,
     "activityRecordsInWeek": 131200,
     "nonlocalMathDataFileNames": [],
-    "host": "127.0.0.1",
+    "host": "203.12.5.172",
     "licenseExpiration": 1539475200000,
     "recentStateCount": 319,
     "msg_type": "heartbeat",
