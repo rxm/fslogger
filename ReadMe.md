@@ -1,7 +1,7 @@
 
 # Write pBit detections to files
 
-> **Version 0.2.1** of fslogger, a Node server that writes POST requests to a file translating DeepXi JSON into ArcSight CEF
+> **Version 0.2.2** of fslogger, a Node server that writes POST requests to a file translating DeepXi JSON into ArcSight CEF
 
 ## Installing
 

@@ -1,7 +1,16 @@
 /*
  *   Take the POST data and save it to a log
  *
- *   Version 0.2.0 from Fri Mar 2 18:23:36 EST 2018
+ *  Version 0.2.2 from Fri Mar  9 09:04:49 EST 2018
+ *    data format fixes from Chris
+ *  Version 0.2.1 from Sat Mar 3 12:38:39 2018
+ *    new data format
+ *  Version 0.1.9 from Sun Jan 28 08:12:23 2018
+ *  Version 0.1.7 from Sun Jan 28 08:12:23 2018
+ *  Version 0.1.5 from Thu Jan 11 22:59:40 2018
+ *  Version 0.1.0 from Fri Jan 5 16:34:18 2018
+ *    initial git commit from Hg       
+ *
  */
 
 'use strict';
@@ -219,7 +228,7 @@ function ceflogger (logs, jsonstr) {
           if ( typeof(data.msg_type) === 'undefined') {
             mt = 'No message type defined';
           } else {
-            mt = 'Unexpexted message type ' + data.msg_type;
+            mt = 'Unexpected message type ' + data.msg_type;
           }
           serverLog('ERROR', mt);
       }
@@ -235,18 +244,19 @@ function ceflogger (logs, jsonstr) {
   data is the JSON from pBit and cef is the log entry in CEF
 */
 function stateToCEF(data) {
+  
   var cef, s, sev, ex, regex, match, infoEventQ, machineName;
-  
+
   cef = formatEpoch(0);
-  
+
   if (! versionOK(DATAVER, data.json_schema_version) ) {
     serverLog('ERROR',
-      'Got innapropriate version of data: ' +  data.json_schema_version);
+      'Got innapropriate version of data: ' + data.json_schema_version);
     return cef;
   }
   
-  // avoid data.node;
-  machineName = data.ip_address;
+  // NTDomain + host or IP?;
+  machineName = data.node;
   
   // common part of the format
   cef = formatEpoch(data.run_start);
@@ -302,19 +312,32 @@ function stateToCEF(data) {
   cef += 'dvcmac=';
   cef += (data.mac_address).match(/(..)/g).join(':');  
   
+  // IPV4
+  cef += ' dvc=';
+  cef += (data.ip_address);
+
+  // NTdomain, Hostname
+  var ntD = "";
+  var zhost = ""; 
+  [ntD,zhost] = data.node.split("\\",2) ;
+  cef += ' dvchost=' ;
+  cef += zhost ;
+  cef += ' deviceNtDomain=' ;
+  cef += ntD ;
+
   // process summary
-  cef += ' deviceCustomString1Label=processSummary';
-  cef += ' deviceCustomString1=' + cefencode(data.process_summary);
+  cef += ' cs1Label=processSummary';
+  cef += ' cs1=' + cefencode(data.process_summary);
   
   // score
-  cef += ' deviceCustomFloatingPoint1Label=Score';
-  cef += ' deviceCustomFloatingPoint1=';
+  cef += ' cfp1Label=Score';
+  cef += ' cfp1=';
   cef += Math.round(data.score * 1000)/1000;
   
   // family bundle
   if (typeof(data.family_bundle) == 'string') {
-    cef += ' deviceCustomString2Label=SeenBefore';
-    cef += ' deviceCustomString2=';
+    cef += ' cs2Label=SeenBefore';
+    cef += ' cs2=';
     
     if (data.family_bundle.startsWith('local_detections_filt')) {
       cef += 'Locally';
@@ -358,7 +381,6 @@ function stateToCEF(data) {
   
   return cef;
 }
-
 /**
 
 */
